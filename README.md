@@ -1,6 +1,10 @@
 # RawHttpServer
 
-### 1) httpfs
+### 1) Building the project
+
+    mvn clean compile assembly:single
+
+### 2) httpfs
 
 Remote filesystem program built on top of a raw http server
 
