@@ -10,15 +10,15 @@ Remote filesystem program built on top of a raw http server
 
 Running the httpfs program:
 
-    httpfs.httpfs -v
+    java -jar target/httpfs-1.0-jar-with-dependencies.jar -v
     
 Specifying root directory (default is current working directory) & port on which the program will run:
 
-    httpfs.httpf -p 16000 -d <path>
+    java -jar target/httpfs-1.0-jar-with-dependencies.jar -p 16000 -d <path>
 
 Getting help:
 
-    httpfs.httpfs help
+    java -jar target/httpfs-1.0-jar-with-dependencies.jar help
     
 Use cUrl to query the remote filesystem (start httpfs before querying):
 
