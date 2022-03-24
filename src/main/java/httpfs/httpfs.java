@@ -28,17 +28,23 @@ public class httpfs {
                 "help \tPrints this help message");
     }
 
-    public static List<Path> getFiles() throws IOException {
+    public static List<String> getFiles() throws IOException {
         List<Path> files;
         Path path = Paths.get(directoryPath);
         Stream<Path> walk = Files.walk(path);
         files = walk.filter(Files::isRegularFile).collect(Collectors.toList());
 
+        List<String> relativePaths = new ArrayList<>();
+        for (Path p : files) {
+            relativePaths.add(p.toString().replace(directoryPath + "/", ""));
+        }
+
         if (verbose) {
             System.out.println("\nFiles found in " + path + " directory: ");
-            System.out.println(Arrays.toString(files.toArray()) + "\n");
+            System.out.println(relativePaths);
         }
-        return files;
+
+        return relativePaths;
     }
 
     public static StringBuilder readFileContents(File file) {
@@ -49,6 +55,9 @@ public class httpfs {
                 contents.append(sc.nextLine()).append("\n");
             }
         } catch (FileNotFoundException exception) {
+            if (verbose) {
+                System.out.println("Error reading file contents: " + exception.getMessage());
+            }
             System.out.println("File not found");
         }
         return contents;
@@ -69,13 +78,12 @@ public class httpfs {
 
         // todo: return files with extensions that match the "Accept" key of the request header
         try {
-            List<Path> files = getFiles();
-            for (Path p : files) {
-                String filename = p.getFileName().toString();
-                if (headers.get("httpUri").equalsIgnoreCase("/")) {
+            List<String> files = getFiles();
+            for (String p : files) {
+                if (headers.get("httpUri").equalsIgnoreCase("/") || headers.get("httpUri").equalsIgnoreCase("")) {
                     body.append("-").append(p).append("\n");
-                } else if (("/"+filename).equals(headers.get("httpUri")) || filename.equals(headers.get("httpUri"))) {
-                    body = readFileContents(new File(p.toString()));
+                } else if (("/"+p).equals(headers.get("httpUri")) || p.equals(headers.get("httpUri"))) {
+                    body = readFileContents(new File(directoryPath + "/" + p));
                 }
             }
         } catch (IOException e) {
@@ -159,7 +167,7 @@ public class httpfs {
         String[] requestLineTokens = answer.split(" ");
         headers.put("httpMethod", requestLineTokens[0]);
         headers.put("httpUri", requestLineTokens[1].replace("http://", "")
-                .replace("https://", "").replaceAll("^(.*?)/", ""));
+                .replace("https://", "").replaceAll("^(.*?)(/|$)", ""));
         headers.put("httpVersion", requestLineTokens[2].split("/")[1]);
 
         while (answer.length() > 0) {
@@ -239,6 +247,10 @@ public class httpfs {
         }
         if (cmd.hasOption("p")) {
             portNumber = Integer.parseInt(cmd.getOptionValue("p"));
+        }
+
+        if (verbose) {
+            System.out.println("Server current working directory: " + directoryPath);
         }
 
         // ========================= Interact with the client socket ==============================
